@@ -1,12 +1,10 @@
 // Implementation based on Chapter 19 of: https://toc.cryptobook.us/
 
-use curve25519_dalek::{constants, ristretto, RistrettoPoint, Scalar};
+use curve25519_dalek::{ristretto, RistrettoPoint, Scalar};
 use rand::{rngs::StdRng, RngCore, SeedableRng};
 
 type SecretKey = Scalar;
 type PublicKey = RistrettoPoint;
-
-pub const G: RistrettoPoint = constants::RISTRETTO_BASEPOINT_POINT;
 
 /// A KeyPair contains a secret key s, which is a random element in Zq, and
 /// its associated public key, which is equal to g^s.
@@ -17,9 +15,8 @@ pub struct KeyPair {
 }
 
 impl KeyPair {
-
     /// Creates a new keypair.
-    /// 
+    ///
     /// Returns a new keypair.
     pub fn new() -> Self {
         let mut rng = StdRng::from_entropy();
@@ -36,23 +33,26 @@ impl KeyPair {
                 secret = possible_secret.unwrap();
             }
         }
-        
+
         // Compute public key
         let public = ristretto::RistrettoPoint::mul_base(&secret);
-    
-        KeyPair {secret, public}
+
+        KeyPair { secret, public }
     }
 
     /// Creates a keypair starting from a secret key.
     /// Parameters:
     ///   - secret: secret key.
-    /// 
+    ///
     /// Returns a keypair with the imported secret key and relative public key.
     pub fn from(secret: &SecretKey) -> Self {
         // Compute public key
         let public = ristretto::RistrettoPoint::mul_base(&secret);
-            
-        KeyPair {secret: *secret, public}
+
+        KeyPair {
+            secret: *secret,
+            public,
+        }
     }
 
     /// Getter for the secret key
@@ -64,7 +64,6 @@ impl KeyPair {
     pub fn public(&self) -> PublicKey {
         self.public
     }
-
 }
 
 #[cfg(test)]
@@ -74,7 +73,10 @@ mod tests {
     #[test]
     fn new_keypair() {
         let keypair = KeyPair::new();
-        print!("Public: {:?} - Secret: {:?}", keypair.public, keypair.secret);
+        print!(
+            "Public: {:?} - Secret: {:?}",
+            keypair.public, keypair.secret
+        );
     }
 
     #[test]
@@ -83,5 +85,4 @@ mod tests {
         assert_eq!(keypair.public, keypair.public());
         assert_eq!(keypair.secret, keypair.secret());
     }
-
 }

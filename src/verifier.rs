@@ -1,11 +1,9 @@
 // Implementation based on Chapter 19 of: https://toc.cryptobook.us/
 
-use std::ops::{Add, Mul, Rem};
+use std::ops::{Add, Mul};
 
-use curve25519_dalek::{edwards, ristretto, traits::MultiscalarMul, RistrettoPoint, Scalar};
+use curve25519_dalek::{ristretto, RistrettoPoint, Scalar};
 use rand::{rngs::StdRng, RngCore, SeedableRng};
-
-use crate::{keypair::KeyPair, utils::{mod_pow, to_scalar, to_slice}};
 
 /// A Prover P is something that needs to prove its identity id.
 /// In the verification process, a new keypair ver_kp is generated and used
@@ -14,13 +12,12 @@ use crate::{keypair::KeyPair, utils::{mod_pow, to_scalar, to_slice}};
 pub struct Verifier {
     id: RistrettoPoint, // Prover public key
     ver_pk: Option<RistrettoPoint>,
-    challenge: Option<Scalar>
+    challenge: Option<Scalar>,
 }
 
 impl Verifier {
-
     /// Creates a new verifier
-    /// 
+    ///
     /// Parameters:
     ///   - id: prover public key.
     ///   - q: group order.
@@ -29,17 +26,17 @@ impl Verifier {
         Verifier {
             id,
             ver_pk: None,
-            challenge: None
+            challenge: None,
         }
     }
 
     /// In the second step, a verifier generates a challenge by taking a random
     /// group element in Zq.
-    /// 
+    ///
     /// Parameters:
     ///   - ver_pk: public key of the keypair generated in the first step by
     ///             the prover.
-    /// 
+    ///
     /// Returns the challenge element to be used by the prover.
     pub fn create_challenge(&mut self, ver_pk: RistrettoPoint) -> Scalar {
         let mut rng = StdRng::from_entropy();
@@ -54,7 +51,7 @@ impl Verifier {
                 challenge = possible_challenge.unwrap();
             }
         }
-        
+
         self.challenge = Some(challenge);
         self.ver_pk = Some(ver_pk);
 
@@ -62,10 +59,10 @@ impl Verifier {
     }
 
     /// In the fourth step, a verifier verifies the identity of the prover.
-    /// 
+    ///
     /// Parameters:
     ///   - response: response provided by the prover.
-    /// 
+    ///
     /// Returns the alpha to be verified by the verifier.
     pub fn verify(self, response: Scalar) -> bool {
         let challenge_available = self.challenge.is_some();
@@ -76,7 +73,6 @@ impl Verifier {
         let u_to_c = ristretto::RistrettoPoint::mul(self.id, self.challenge.unwrap());
         let us = ristretto::RistrettoPoint::add(self.ver_pk.unwrap(), u_to_c);
 
- 
         println!("g^resp = {:?}", g_to_resp);
         println!("us = {:?}", us);
         //println!("VERIFIER RHS - Ver PUB: {:?} - Id pub: {:?} - c: {} - u^c: {} - us = {}", self.ver_pk.unwrap(), self.id, self.challenge.unwrap(), mod_pow(self.id, response, self.order), us);
@@ -88,12 +84,10 @@ impl Verifier {
     pub fn prover_id(&self) -> RistrettoPoint {
         self.id
     }
-
 }
 
 #[cfg(test)]
 mod tests {
-    use curve25519_dalek::constants;
 
     use super::*;
     use crate::prover::Prover;
@@ -107,7 +101,7 @@ mod tests {
         let challenge = verifier.create_challenge(prover.verification_id().unwrap());
         let response = prover.compute_challenge(challenge);
         let verified = verifier.verify(response.unwrap());
-        
+
         assert!(verified);
     }
 
@@ -118,15 +112,14 @@ mod tests {
 
         prover.start_verification();
         let _ = verifier.create_challenge(prover.verification_id().unwrap());
-        
+
         // craft likely invalid response
         let mut slice = [0 as u8; 32];
         slice[0] = 15;
         let response = Scalar::from_bytes_mod_order(slice);
 
         let verified = verifier.verify(response);
-        
+
         assert!(!verified);
     }
-
 }

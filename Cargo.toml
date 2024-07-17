@@ -1,0 +1,9 @@
+[package]
+name = "schnorr-id"
+version = "0.1.0"
+edition = "2021"
+authors = ["Emanuele Civini - emanuele.civini@proton.me"]
+
+[dependencies]
+rand = "0.8.5"
+curve25519-dalek = "4"

@@ -10,7 +10,7 @@ use rand::{rngs::StdRng, RngCore, SeedableRng};
 /// by a verifier V.
 #[derive(Copy, Clone)]
 pub struct Verifier {
-    id: RistrettoPoint, // Prover public key
+    id: RistrettoPoint,
     ver_pk: Option<RistrettoPoint>,
     challenge: Option<Scalar>,
 }
@@ -20,8 +20,6 @@ impl Verifier {
     ///
     /// Parameters:
     ///   - id: prover public key.
-    ///   - q: group order.
-    ///   - g: group generator.
     pub fn new(id: RistrettoPoint) -> Self {
         Verifier {
             id,
@@ -31,7 +29,7 @@ impl Verifier {
     }
 
     /// In the second step, a verifier generates a challenge by taking a random
-    /// group element in Zq.
+    /// element in Z/lZ.
     ///
     /// Parameters:
     ///   - ver_pk: public key of the keypair generated in the first step by
@@ -72,10 +70,6 @@ impl Verifier {
 
         let u_to_c = ristretto::RistrettoPoint::mul(self.id, self.challenge.unwrap());
         let us = ristretto::RistrettoPoint::add(self.ver_pk.unwrap(), u_to_c);
-
-        println!("g^resp = {:?}", g_to_resp);
-        println!("us = {:?}", us);
-        //println!("VERIFIER RHS - Ver PUB: {:?} - Id pub: {:?} - c: {} - u^c: {} - us = {}", self.ver_pk.unwrap(), self.id, self.challenge.unwrap(), mod_pow(self.id, response, self.order), us);
 
         challenge_available && g_to_resp.eq(&us)
     }

@@ -34,13 +34,8 @@ impl Prover {
     /// In the first step, a prover must generate a new keypair and send
     /// the new public key to the verifier.
     ///
-    /// Parameters:
-    ///   - q: group order.
-    ///   - g: group generator.
-    ///
     /// Returns a new keypair used in the verification process.
     /// NOTE: this keypair is not the one that identifies the prover.
-    /// pub fn new(q: u128, g: u128) -> Self {
     pub fn start_verification(&mut self) {
         self.ver_kp = Some(KeyPair::new());
     }

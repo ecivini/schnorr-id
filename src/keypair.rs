@@ -6,8 +6,8 @@ use rand::{rngs::StdRng, RngCore, SeedableRng};
 type SecretKey = Scalar;
 type PublicKey = RistrettoPoint;
 
-/// A KeyPair contains a secret key s, which is a random element in Zq, and
-/// its associated public key, which is equal to g^s.
+/// A KeyPair contains a secret key s which is an element of Z/lZ, and
+/// its associated public key, which is a curve point equal to g^s.
 #[derive(Copy, Clone)]
 pub struct KeyPair {
     secret: SecretKey,
@@ -17,7 +17,7 @@ pub struct KeyPair {
 impl KeyPair {
     /// Creates a new keypair.
     ///
-    /// Returns a new keypair.
+    /// Returns the new keypair.
     pub fn new() -> Self {
         let mut rng = StdRng::from_entropy();
 

@@ -1,7 +1,7 @@
 // Implementation based on Chapter 19 of: https://toc.cryptobook.us/
 
 use curve25519_dalek::{ristretto, RistrettoPoint, Scalar};
-use rand::{rngs::StdRng, RngCore, SeedableRng};
+use rand::{CryptoRng, RngCore};
 
 type SecretKey = Scalar;
 type PublicKey = RistrettoPoint;
@@ -18,9 +18,7 @@ impl KeyPair {
     /// Creates a new keypair.
     ///
     /// Returns the new keypair.
-    pub fn new() -> Self {
-        let mut rng = StdRng::from_entropy();
-
+    pub fn new<R: CryptoRng + RngCore>(rng: &mut R) -> Self {
         // Generate random secret key
         let mut secret = Scalar::default();
 
@@ -68,11 +66,15 @@ impl KeyPair {
 
 #[cfg(test)]
 mod tests {
+    use rand::{rngs::StdRng, SeedableRng};
+
     use super::*;
 
     #[test]
     fn new_keypair() {
-        let keypair = KeyPair::new();
+        let mut rng = StdRng::from_entropy();
+
+        let keypair = KeyPair::new(&mut rng);
         print!(
             "Public: {:?} - Secret: {:?}",
             keypair.public, keypair.secret
@@ -81,7 +83,9 @@ mod tests {
 
     #[test]
     fn getters() {
-        let keypair = KeyPair::new();
+        let mut rng = StdRng::from_entropy();
+
+        let keypair = KeyPair::new(&mut rng);
         assert_eq!(keypair.public, keypair.public());
         assert_eq!(keypair.secret, keypair.secret());
     }

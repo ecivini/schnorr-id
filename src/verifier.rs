@@ -3,7 +3,7 @@
 use std::ops::{Add, Mul};
 
 use curve25519_dalek::{ristretto, RistrettoPoint, Scalar};
-use rand::{rngs::StdRng, RngCore, SeedableRng};
+use rand::{CryptoRng, RngCore};
 
 /// A Prover P is something that needs to prove its identity id.
 /// In the verification process, a new keypair ver_kp is generated and used
@@ -36,9 +36,11 @@ impl Verifier {
     ///             the prover.
     ///
     /// Returns the challenge element to be used by the prover.
-    pub fn create_challenge(&mut self, ver_pk: RistrettoPoint) -> Scalar {
-        let mut rng = StdRng::from_entropy();
-
+    pub fn create_challenge<R: CryptoRng + RngCore>(
+        &mut self,
+        ver_pk: RistrettoPoint,
+        rng: &mut R,
+    ) -> Scalar {
         let mut challenge = Scalar::default();
         while challenge == Scalar::default() {
             let mut slice = [0 as u8; 32];
@@ -83,16 +85,19 @@ impl Verifier {
 #[cfg(test)]
 mod tests {
 
+    use rand::{rngs::StdRng, SeedableRng};
+
     use super::*;
     use crate::prover::Prover;
 
     #[test]
     fn test_verify_correct() {
-        let mut prover = Prover::new();
+        let mut rng = StdRng::from_entropy();
+        let mut prover = Prover::new(&mut rng);
         let mut verifier = Verifier::new(prover.id());
 
-        prover.start_verification();
-        let challenge = verifier.create_challenge(prover.verification_id().unwrap());
+        prover.start_verification(&mut rng);
+        let challenge = verifier.create_challenge(prover.verification_id().unwrap(), &mut rng);
         let response = prover.compute_challenge(challenge);
         let verified = verifier.verify(response.unwrap());
 
@@ -101,11 +106,12 @@ mod tests {
 
     #[test]
     fn test_verify_incorrect() {
-        let mut prover = Prover::new();
+        let mut rng = StdRng::from_entropy();
+        let mut prover = Prover::new(&mut rng);
         let mut verifier = Verifier::new(prover.id());
 
-        prover.start_verification();
-        let _ = verifier.create_challenge(prover.verification_id().unwrap());
+        prover.start_verification(&mut rng);
+        let _ = verifier.create_challenge(prover.verification_id().unwrap(), &mut rng);
 
         // craft likely invalid response
         let mut slice = [0 as u8; 32];

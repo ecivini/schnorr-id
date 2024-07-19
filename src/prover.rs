@@ -4,6 +4,7 @@ use std::ops::{Add, Mul};
 
 use crate::keypair::KeyPair;
 use curve25519_dalek::{RistrettoPoint, Scalar};
+use rand::{CryptoRng, RngCore};
 
 /// A Prover P is something that needs to prove its identity id.
 /// In the verification process, a new keypair ver_kp is generated and used
@@ -16,9 +17,9 @@ pub struct Prover {
 
 impl Prover {
     /// Creates a prover with a new identity
-    pub fn new() -> Self {
+    pub fn new<R: CryptoRng + RngCore>(rng: &mut R) -> Self {
         Prover {
-            id: KeyPair::new(),
+            id: KeyPair::new(rng),
             ver_kp: None,
         }
     }
@@ -36,8 +37,8 @@ impl Prover {
     ///
     /// Returns a new keypair used in the verification process.
     /// NOTE: this keypair is not the one that identifies the prover.
-    pub fn start_verification(&mut self) {
-        self.ver_kp = Some(KeyPair::new());
+    pub fn start_verification<R: CryptoRng + RngCore>(&mut self, rng: &mut R) {
+        self.ver_kp = Some(KeyPair::new(rng));
     }
 
     /// In the third step, a prover must compute a value based on the
@@ -70,11 +71,14 @@ impl Prover {
 
 #[cfg(test)]
 mod tests {
+    use rand::{rngs::StdRng, SeedableRng};
+
     use super::*;
 
     #[test]
     fn new_prover() {
-        let prover = Prover::new();
+        let mut rng = StdRng::from_entropy();
+        let prover = Prover::new(&mut rng);
 
         println!(
             "Public: {:?} - Secret: {:?}",
@@ -86,7 +90,8 @@ mod tests {
 
     #[test]
     fn prover_from_identity() {
-        let id = KeyPair::new();
+        let mut rng = StdRng::from_entropy();
+        let id = KeyPair::new(&mut rng);
         let prover = Prover::from(&id);
 
         println!(
@@ -102,9 +107,10 @@ mod tests {
 
     #[test]
     fn prover_start_challenge() {
-        let mut prover = Prover::new();
+        let mut rng = StdRng::from_entropy();
+        let mut prover = Prover::new(&mut rng);
 
-        prover.start_verification();
+        prover.start_verification(&mut rng);
 
         assert!(prover.ver_kp.is_some());
 
